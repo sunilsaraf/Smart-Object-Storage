@@ -1,0 +1,29 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy source code
+COPY src/ /app/src/
+COPY config/ /app/config/
+
+# Set Python path
+ENV PYTHONPATH=/app/src/query_plane:/app/src/indexing_plane:/app/src/event_plane
+
+WORKDIR /app/src/query_plane
+
+# Expose API port
+EXPOSE 8000
+
+# Run API server
+CMD ["uvicorn", "search_api:app", "--host", "0.0.0.0", "--port", "8000"]

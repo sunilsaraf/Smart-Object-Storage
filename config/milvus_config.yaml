@@ -1,0 +1,29 @@
+milvus:
+  host: localhost
+  port: 19530
+  user: ""
+  password: ""
+  
+  # Collection configuration
+  collection:
+    name: object_chunks
+    description: "Semantic embeddings of object storage chunks"
+    
+    # Schema configuration
+    schema:
+      dimension: 768  # Embedding dimension (matches sentence-transformers default)
+      metric_type: "IP"  # Inner Product (IP) or L2
+      index_type: "IVF_FLAT"  # Index type (IVF_FLAT, HNSW, etc.)
+      
+    # Index parameters
+    index_params:
+      nlist: 1024  # Number of cluster units
+      
+    # Search parameters
+    search_params:
+      nprobe: 10  # Number of units to query
+      
+  # Connection settings
+  connection:
+    timeout: 30
+    pool_size: 10

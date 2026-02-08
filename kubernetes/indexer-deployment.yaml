@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: smart-storage
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: worker-config
+  namespace: smart-storage
+data:
+  worker_config.yaml: |
+    worker:
+      indexer:
+        num_workers: 4
+        batch_size: 10
+        max_retries: 3
+      deletion:
+        num_workers: 2
+        batch_size: 50
+    message_queue:
+      type: "kafka"
+      kafka:
+        bootstrap_servers:
+          - "kafka-service:9092"
+        topics:
+          index_events: "object-index-events"
+          delete_events: "object-delete-events"
+        consumer_group: "indexer-workers"
+    object_storage:
+      type: "minio"
+      minio:
+        endpoint: "minio-service:9000"
+        access_key: "${MINIO_ACCESS_KEY}"
+        secret_key: "${MINIO_SECRET_KEY}"
+        secure: false
+    database:
+      type: "postgresql"
+      postgresql:
+        host: "postgres-service"
+        port: 5432
+        database: "smart_storage"
+        user: "${POSTGRES_USER}"
+        password: "${POSTGRES_PASSWORD}"
+        pool_size: 10
+    chunking:
+      strategy: "semantic"
+      max_chunk_size: 512
+      overlap: 50
+    text_extraction:
+      formats:
+        - pdf
+        - docx
+        - pptx
+        - txt
+      ocr:
+        enabled: true
+        language: "eng"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: indexer-worker
+  namespace: smart-storage
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: indexer-worker
+  template:
+    metadata:
+      labels:
+        app: indexer-worker
+    spec:
+      containers:
+      - name: indexer
+        image: smart-storage/indexer:latest
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: password
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secret
+              key: access-key
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secret
+              key: secret-key
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+      volumes:
+      - name: config
+        configMap:
+          name: worker-config
