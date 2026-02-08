@@ -1,0 +1,28 @@
+embedding:
+  # Embedding provider: 'sentence-transformers', 'openai', 'huggingface'
+  provider: "sentence-transformers"
+  
+  # Sentence Transformers configuration
+  sentence_transformers:
+    model_name: "all-MiniLM-L6-v2"  # 384 dimensions, fast
+    # model_name: "all-mpnet-base-v2"  # 768 dimensions, better quality
+    device: "cpu"  # or "cuda" for GPU
+    batch_size: 32
+    normalize_embeddings: true
+    
+  # OpenAI configuration (if using OpenAI)
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    model: "text-embedding-ada-002"
+    dimensions: 1536
+    
+  # HuggingFace configuration (if using custom models)
+  huggingface:
+    model_name: "sentence-transformers/all-MiniLM-L6-v2"
+    token: "${HUGGINGFACE_TOKEN}"
+    
+  # Caching
+  cache:
+    enabled: true
+    max_size: 10000
+    ttl_seconds: 3600
