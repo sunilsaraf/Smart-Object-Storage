@@ -1,0 +1,110 @@
+worker:
+  # Indexer worker configuration
+  indexer:
+    num_workers: 4
+    batch_size: 10
+    max_retries: 3
+    retry_backoff: 2.0
+    prefetch_count: 20
+    
+  # Deletion worker configuration
+  deletion:
+    num_workers: 2
+    batch_size: 50
+    
+  # Shared worker settings
+  shutdown_timeout: 30
+  health_check_interval: 60
+  
+# Message queue configuration
+message_queue:
+  type: "kafka"  # kafka, sqs, pubsub
+  
+  # Kafka configuration
+  kafka:
+    bootstrap_servers:
+      - "localhost:9092"
+    topics:
+      index_events: "object-index-events"
+      delete_events: "object-delete-events"
+    consumer_group: "indexer-workers"
+    auto_offset_reset: "earliest"
+    enable_auto_commit: false
+    max_poll_records: 100
+    
+  # AWS SQS configuration (if using SQS)
+  sqs:
+    region: "us-east-1"
+    index_queue_url: "${SQS_INDEX_QUEUE_URL}"
+    delete_queue_url: "${SQS_DELETE_QUEUE_URL}"
+    visibility_timeout: 300
+    wait_time_seconds: 20
+    
+  # Google Pub/Sub configuration (if using Pub/Sub)
+  pubsub:
+    project_id: "${GCP_PROJECT_ID}"
+    index_subscription: "object-index-events-sub"
+    delete_subscription: "object-delete-events-sub"
+    
+# Object storage configuration
+object_storage:
+  type: "minio"  # minio, s3
+  
+  # MinIO configuration
+  minio:
+    endpoint: "localhost:9000"
+    access_key: "${MINIO_ACCESS_KEY}"
+    secret_key: "${MINIO_SECRET_KEY}"
+    secure: false
+    
+  # AWS S3 configuration
+  s3:
+    region: "us-east-1"
+    access_key: "${AWS_ACCESS_KEY_ID}"
+    secret_key: "${AWS_SECRET_ACCESS_KEY}"
+    
+# Database configuration
+database:
+  type: "postgresql"  # postgresql, mongodb
+  
+  # PostgreSQL configuration
+  postgresql:
+    host: "localhost"
+    port: 5432
+    database: "smart_storage"
+    user: "${POSTGRES_USER}"
+    password: "${POSTGRES_PASSWORD}"
+    pool_size: 10
+    max_overflow: 20
+    
+  # MongoDB configuration (alternative)
+  mongodb:
+    uri: "${MONGODB_URI}"
+    database: "smart_storage"
+    
+# Chunking configuration
+chunking:
+  strategy: "semantic"  # semantic, fixed, sliding
+  max_chunk_size: 512  # tokens
+  overlap: 50  # tokens overlap between chunks
+  min_chunk_size: 50  # tokens
+  
+# Text extraction configuration
+text_extraction:
+  # Supported formats
+  formats:
+    - pdf
+    - docx
+    - pptx
+    - txt
+    - html
+    - md
+  
+  # OCR configuration (for images in PDFs, images)
+  ocr:
+    enabled: true
+    language: "eng"
+    
+  # Extraction limits
+  max_file_size_mb: 100
+  timeout_seconds: 300
